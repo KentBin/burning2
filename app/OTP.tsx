@@ -6,16 +6,17 @@ import { COLORS, SIZES, FONTS, image } from "../constants";
 import SignUpButton from "../components/SignUpButton";
 import MaskInput from 'react-native-mask-input';
 import { useRouter } from 'expo-router';
-import { isClerkAPIResponseError, useSignIn, useSignUp } from '@clerk/clerk-expo';
+import { useSignIn, useSignUp } from '@clerk/clerk-expo';
 
 import vnIcon from '@/assets/logo/logo-vietnam.png';
+
+import auth, {FirebaseAuthTypes} from '@react-native-firebase/auth';
+
+import VerifyPhone from "./phoneAuth/PhoneVerification";
+import ModalPopup from "./modals/SignInModal"
 const vn = Image.resolveAssetSource(vnIcon).uri
 const VIE_PHONE = [
-  '+', '8', '4',
   /\d/,
-  /\d/,
-  /\d/,
-  ' ',
   /\d/,
   /\d/,
   /\d/,
@@ -23,39 +24,53 @@ const VIE_PHONE = [
   /\d/,
   /\d/,
   /\d/,
-
+  ' ',
+  /\d/,
+  /\d/,
+  /\d/,
+  /\d/,
 ];
 
 const Login = ({ }) => {
+  const [isVerifying, setIsVerifying] = useState(false);
+  const [confirmationResult, setConfirmationResult] = useState<any | null>(null);
   const [loading, setLoading] = useState(false);
-  const [phoneNumber, setPhoneNumber] = useState('');
-  const { signUp, setActive } = useSignUp();
+  const [phoneNumber, setPhoneNumber] = useState('+84');
+
+
+  const [verificationWrong, setVerificationWrong] = useState(false);
+
+
   const { signIn } = useSignIn();
   const router = useRouter();
 
   const sendOTP = async () => {
-    
-    setLoading(true);
-    try {
-      await signUp!.create({
-        phoneNumber,
-      });
 
-      signUp!.preparePhoneNumberVerification();
-      router.push(`/verification/${phoneNumber}`);
-      
+    setLoading(true);
+    console.log('sending to' + phoneNumber)
+    try {
+      const confirmation = await auth().signInWithPhoneNumber(phoneNumber);
+      console.log(confirmation)
+      //setConfirmationResult(result);
+      //setIsVerifying(true);
     } catch (err) {
-      console.log('error', JSON.stringify(err, null, 2));
-      if (isClerkAPIResponseError(err)) {
-        if (err.errors[0].code === 'form_identifier_exists') {
-          // User signed up before
-          console.log('User signed up before');
-          await trySignIn();
-        } else {
-          setLoading(false);
-          Alert.alert('Error', err.errors[0].message);
-        }
+      console.log(err);
+
+      setLoading(false);
+
+    }
+  }
+
+  const verifyOTP = async (otp: any) => {
+    if (confirmationResult) {
+      try {
+        const userCredential = await confirmationResult.confirm(otp);
+        setLoading(true);
+      } catch (error) {
+        setVerificationWrong(true);
       }
+    } else {
+      Alert.alert("Sai Mã OTP");
     }
   }
 
@@ -98,34 +113,34 @@ const Login = ({ }) => {
           <View style={styles.container}>
             <View
               style={[styles.inputContainer, { borderColor: COLORS.gray }]}>
+              <View id="recaptcha"></View>
 
-{loading && (
-        <View style={[StyleSheet.absoluteFill, styles.loading]}>
-          <ActivityIndicator size="large" color={COLORS.background} />
-          <Text style={{ fontSize: 18, padding: 10 }}>Đang Gửi Mã</Text>
-        </View>
-      )}
+              {loading && (
+                <View style={[StyleSheet.absoluteFill, styles.loading]}>
+                  <ActivityIndicator size="large" color={COLORS.background} />
+                  <Text style={{ fontSize: 18, padding: 10 }}>Đang Gửi Mã</Text>
+                </View>
+              )}
 
 
 
-<View style={styles.flagContainer}>
-<Image style={{
-            width: 30,
-            height: 30,
-            marginLeft: 4,
-            marginRight: 4,
-      }} source = {{ uri: vn }}/>
-</View>
-      
+              <View style={styles.flagContainer}>
+                <Image style={{
+                  width: 30,
+                  height: 30,
+                  marginLeft: 4,
+                  marginRight: 4,
+                }} source={{ uri: vn }} />
+              </View>
               <MaskInput
-              style={[{...FONTS.body2}, styles.input]}
+                style={[{ ...FONTS.body2 }, styles.input]}
                 value={phoneNumber}
-                keyboardType="numeric"
+                keyboardType="number-pad"
                 autoFocus
                 placeholder="Số Điện Thoại (bỏ 0 đầu tiên)"
+                autoComplete="sms-otp"
                 onChangeText={(masked, unmasked) => {
-                  setPhoneNumber(masked); 
-                  console.log(phoneNumber)
+                  setPhoneNumber(unmasked);
                 }}
                 mask={VIE_PHONE}
               />
@@ -183,14 +198,14 @@ const styles = StyleSheet.create({
     flex: 1,
     fontFamily: 'regular',
     paddingTop: 0,
-    
-},
-loading: {
-  zIndex: 10,
-  backgroundColor: '#fff',
-  justifyContent: 'center',
-  alignItems: 'center',
-},
+
+  },
+  loading: {
+    zIndex: 10,
+    backgroundColor: '#fff',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
 });
 
 export default Login;

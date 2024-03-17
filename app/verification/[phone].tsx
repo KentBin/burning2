@@ -15,6 +15,8 @@ import {
 const Page = () => {
     const { phone, signin } = useLocalSearchParams<{ phone: string; signin: string }>();
     const [code, setCode] = useState('');
+    
+
     const { signUp, setActive } = useSignUp();
     const { signIn } = useSignIn();
   const ref = useBlurOnFulfill({ value: code, cellCount: CELL_COUNT });
@@ -42,18 +44,7 @@ const Page = () => {
     }
 
     const verifyCode = async () => {
-      try {
-        await signUp!.attemptPhoneNumberVerification({
-          code,
-        });
-  
-        await setActive!({ session: signUp!.createdSessionId });
-      } catch (err) {
-        console.log('error', JSON.stringify(err, null, 2));
-        if (isClerkAPIResponseError(err)) {
-          Alert.alert('Error', err.errors[0].message);
-        }
-      }
+
     }
     const resendCode = async () => {}
 
