@@ -1,11 +1,11 @@
 import FontAwesome from '@expo/vector-icons/FontAwesome';
-import { View } from 'react-native';
 import { useFonts } from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
-import { useEffect } from 'react';
-import { Stack, useRouter, useSegments } from 'expo-router';
+import { useEffect, useState } from 'react';
+import { Stack, useRouter, useSegments,  useRootNavigationState } from 'expo-router';
 import { ClerkProvider, useAuth } from '@clerk/clerk-expo';
 import * as SecureStore from 'expo-secure-store';
+import auth from '@react-native-firebase/auth';
 
 const CLERK_PUBLISHABLE_KEY = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY;
 
@@ -37,12 +37,15 @@ SplashScreen.preventAutoHideAsync();
 const InitialLayout = () => {
   const router = useRouter();
   const segments = useSegments();
-  const { isLoaded, isSignedIn } = useAuth();
+  const navigationState = useRootNavigationState();
+
+  const [initializing, setInitializing] = useState(true);
+  const [user, setUser] = useState(null)
+  
   const [loaded, error] = useFonts({
     SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
     ...FontAwesome.font,
   });
-
   // Expo Router uses Error Boundaries to catch errors in the navigation tree.
   useEffect(() => {
     if (error) throw error;
@@ -55,28 +58,35 @@ const InitialLayout = () => {
   }, [loaded]);
 
   useEffect(() => {
-    if (!isLoaded) return;
+    if (!navigationState?.key) return;
 
-    const inTabsGroup = segments[0] === '(tabs)';
+    const inAuthGroup = segments[0] === "(tabs)";
 
-    if (isSignedIn && !inTabsGroup) {
-      router.replace("/(tabs)/OrderList");
-
-    } else if (!isSignedIn) {
-      router.replace('/');
+    // This structure may differ from other implementations. 
+    if (user && segments.length === 0) {
+      router.push("/(tabs)/setting");
+      return;
+    } else {
+      router.replace("/");
     }
-  }, [isSignedIn]);
+}, [user]);
 
-
-  if (!loaded || !isLoaded) {
-    return <View />;
+  function onAuthStateChanged(user: any) {
+    setUser(user);
+    if (initializing) setInitializing(false);
   }
+
+  useEffect(() => {
+    const subscriber = auth().onAuthStateChanged(onAuthStateChanged);
+    return subscriber; // unsubscribe on unmount
+  }, []);
 
   return  (<Stack>
   <Stack.Screen name="index" options={{ headerShown: false }} />
   <Stack.Screen name="OTP" options={{ headerShown: false }} />
-  <Stack.Screen name="verification/[phone]" options={{ title: 'Xác Nhận Số Điện Thoại',
-    headerShown: true, headerBackTitle: "Nhập Lại SĐT" }} />
+  <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+  {/* <Stack.Screen name="verification/[phone]" options={{ title: 'Xác Nhận Số Điện Thoại',
+    headerShown: true, headerBackTitle: "Nhập Lại SĐT" }} /> */}
 </Stack>);
 }
 

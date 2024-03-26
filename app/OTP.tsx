@@ -1,21 +1,29 @@
-import React, { useState } from "react";
-import { View, Text, Image, Alert, ActivityIndicator, StyleSheet, ScrollView } from "react-native";
+import React, { useState, useEffect } from "react";
+import { View, Text, Image, StyleSheet, ScrollView } from "react-native";
+import { GestureHandlerRootView, TouchableOpacity } from 'react-native-gesture-handler';
 import { SafeAreaView } from "react-native-safe-area-context";
 import { COLORS, SIZES, FONTS, image } from "../constants";
 
 import SignUpButton from "../components/SignUpButton";
 import MaskInput from 'react-native-mask-input';
 import { useRouter } from 'expo-router';
-import { useSignIn, useSignUp } from '@clerk/clerk-expo';
 
 import vnIcon from '@/assets/logo/logo-vietnam.png';
 
-import auth, {FirebaseAuthTypes} from '@react-native-firebase/auth';
+import auth from '@react-native-firebase/auth';
+import firestore from '@react-native-firebase/firestore';
 
-import VerifyPhone from "./phoneAuth/PhoneVerification";
-import ModalPopup from "./modals/SignInModal"
+import LottieView from "lottie-react-native";
+import {
+  CodeField,
+  Cursor,
+  useBlurOnFulfill,
+  useClearByFocusCell,
+} from 'react-native-confirmation-code-field';
+const CELL_COUNT = 6;
 const vn = Image.resolveAssetSource(vnIcon).uri
 const VIE_PHONE = [
+  '+',
   /\d/,
   /\d/,
   /\d/,
@@ -33,69 +41,83 @@ const VIE_PHONE = [
 
 const Login = ({ }) => {
   const [isVerifying, setIsVerifying] = useState(false);
-  const [confirmationResult, setConfirmationResult] = useState<any | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [phoneNumber, setPhoneNumber] = useState('+84');
 
+  const [phoneNumber, setPhoneNumber] = useState('+84 ');
+  const [confirmationResult, setConfirmationResult] = useState<any | null>(null);
+  const [errorMessage, setMessage] = useState('');
+  const [code, setCode] = useState('');
 
   const [verificationWrong, setVerificationWrong] = useState(false);
 
-
-  const { signIn } = useSignIn();
   const router = useRouter();
 
+  const ref = useBlurOnFulfill({ value: code, cellCount: CELL_COUNT });
+  const [props, getCellOnLayoutHandler] = useClearByFocusCell({
+    value: code,
+    setValue: setCode,
+  });
+  useEffect(() => {
+    if (code.length === 6) {
+        verifyOTP();
+    }
+  }, [code]);
   const sendOTP = async () => {
-
-    setLoading(true);
-    console.log('sending to' + phoneNumber)
+    const phoneRegex = /((^(\+84|84|0|0084){1})(3|5|7|8|9))+([0-9 ]{10})$/;
+    setIsVerifying(true);
     try {
+      if (!phoneRegex.test(phoneNumber)) {
+        setMessage('So dien toai ko op le')
+        return
+      }
+
       const confirmation = await auth().signInWithPhoneNumber(phoneNumber);
-      console.log(confirmation)
-      //setConfirmationResult(result);
-      //setIsVerifying(true);
+      setConfirmationResult(confirmation);
+      setIsVerifying(false);
+
     } catch (err) {
-      console.log(err);
-
-      setLoading(false);
-
+      alert("Loi gui ma")
     }
   }
 
-  const verifyOTP = async (otp: any) => {
-    if (confirmationResult) {
-      try {
-        const userCredential = await confirmationResult.confirm(otp);
-        setLoading(true);
-      } catch (error) {
-        setVerificationWrong(true);
+  const verifyOTP = async () => {
+    try {
+      const userCredential = await confirmationResult.confirm(code);
+      const user = userCredential.user;
+      console.log(user)
+      router.push(`/(tabs)/home`);
+
+   /*    const userDocument = await firestore().collection('customers').doc(user.phoneNumber).get();
+      if (userDocument.exists) {
+        router.push(`/(tabs)/OrderList`);
       }
-    } else {
-      Alert.alert("Sai Mã OTP");
+      else {
+        alert('sign up todo')
+      } */
+    }
+    catch (error) {
+      alert(error);
+      console.log(error);
+      setVerificationWrong(true);
     }
   }
 
   const trySignIn = async () => {
-    const { supportedFirstFactors } = await signIn!.create({
-      identifier: phoneNumber,
-    });
-
-    const firstPhoneFactor: any = supportedFirstFactors.find((factor: any) => {
-      return factor.strategy === 'phone_code';
-    });
-
-    const { phoneNumberId } = firstPhoneFactor;
-
-    await signIn!.prepareFirstFactor({
-      strategy: 'phone_code',
-      phoneNumberId,
-    });
-
     router.push(`/verification/${phoneNumber}?signin=true`);
-    setLoading(false);
+
+  }
+
+  const resendCode = async () => {
+
   }
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: COLORS.background }}>
+    <GestureHandlerRootView style={{ flex: 1, backgroundColor: COLORS.background }}>
+        {isVerifying && (
+      <View style={[StyleSheet.absoluteFill, styles.loading]} >
+        <LottieView  imageAssetsFolder={'lottie/orangeJuice'} source={require('../android/app/src/main/assets/lottie/orangeJuice/Animation-1710265288711.json')}/>
+        <Text style={{ fontSize: 18, padding: 10 }}>Sending code...</Text>
+      </View>
+    )}
       <ScrollView
         style={{ flex: 1, backgroundColor: COLORS.primary, padding: 16 }}>
         <Image
@@ -108,57 +130,74 @@ const Login = ({ }) => {
             marginBottom: 30
           }}
         />
-        <Text style={{ ...FONTS.body3, color: COLORS.white }}>Nhập Số Điện Thoại Đã Đăng Ký Tích Điểm</Text>
-        <View style={{ marginVertical: 22 }}>
-          <View style={styles.container}>
-            <View
-              style={[styles.inputContainer, { borderColor: COLORS.gray }]}>
-              <View id="recaptcha"></View>
-
-              {loading && (
-                <View style={[StyleSheet.absoluteFill, styles.loading]}>
-                  <ActivityIndicator size="large" color={COLORS.background} />
-                  <Text style={{ fontSize: 18, padding: 10 }}>Đang Gửi Mã</Text>
+        {!confirmationResult ? (<><Text style={{ ...FONTS.body3, color: COLORS.white }}>Nhập Số Điện Thoại Đã Đăng Ký Tích Điểm</Text>
+          <View style={{ marginVertical: 22 }}>
+            <View style={styles.container}>
+              <View
+                style={[styles.inputContainer, { borderColor: COLORS.gray }]}>
+                <View style={styles.flagContainer}>
+                  <Image style={{
+                    width: 30,
+                    height: 30,
+                    marginLeft: 4,
+                    marginRight: 4,
+                  }} source={{ uri: vn }} />
                 </View>
-              )}
+                <MaskInput
+                  style={[{ ...FONTS.body2 }, styles.input]}
+                  value={phoneNumber}
+                  keyboardType="number-pad"
+                  autoFocus
+                  placeholder="Số Điện Thoại (bỏ 0 đầu tiên)"
+                  autoComplete="sms-otp"
+                  onChangeText={(masked, unmasked) => {
+                    setPhoneNumber(masked);
+                  }}
+                  mask={VIE_PHONE}
+                />
 
-
-
-              <View style={styles.flagContainer}>
-                <Image style={{
-                  width: 30,
-                  height: 30,
-                  marginLeft: 4,
-                  marginRight: 4,
-                }} source={{ uri: vn }} />
               </View>
-              <MaskInput
-                style={[{ ...FONTS.body2 }, styles.input]}
-                value={phoneNumber}
-                keyboardType="number-pad"
-                autoFocus
-                placeholder="Số Điện Thoại (bỏ 0 đầu tiên)"
-                autoComplete="sms-otp"
-                onChangeText={(masked, unmasked) => {
-                  setPhoneNumber(unmasked);
-                }}
-                mask={VIE_PHONE}
-              />
-
             </View>
-          </View>
-          <SignUpButton
-            title="NHẬN MÃ OTP"
-            style={{
-              width: SIZES.width - 32,
-              marginVertical: 8,
-            }}
-            onPress={sendOTP}
-          />
+            <Text style={{ ...FONTS.body4, color: COLORS.red }}>{errorMessage}</Text>
+            <SignUpButton
+              title="NHẬN MÃ OTP"
+              style={{
+                width: SIZES.width - 32,
+                marginVertical: 8,
+              }}
+              onPress={sendOTP}
+            />
 
-        </View>
+          </View></>) : (<><Text style={{ color: COLORS.white }}> Nhập Mã OTP </Text>
+
+            <CodeField
+              ref={ref}
+              {...props}
+              // Use `caretHidden={false}` when users can't paste a text value, because context menu doesn't appear
+              value={code}
+              onChangeText={setCode}
+              cellCount={CELL_COUNT}
+              rootStyle={styles.codeFieldRoot}
+              keyboardType="number-pad"
+              textContentType="oneTimeCode"
+              autoFocus
+              renderCell={({ index, symbol, isFocused }) => (
+                <Text
+                  key={index}
+                  style={[styles.cell, isFocused && styles.focusCell]}
+                  onLayout={getCellOnLayoutHandler(index)}>
+                  {symbol || (isFocused ? <Cursor /> : null)}
+                </Text>
+              )}
+            />
+            <View style={{ marginVertical: 22 }}>
+            
+              <TouchableOpacity style={styles.button} onPress={resendCode}>
+                <Text style={styles.buttonText}>Gửi Lại Mã OTP</Text>
+              </TouchableOpacity> 
+            </View></>)}
       </ScrollView>
-    </SafeAreaView>
+    </GestureHandlerRootView>
   )
 }
 
@@ -205,6 +244,29 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  button: {
+    width: '100%',
+    alignItems: 'center',
+  },
+  buttonText: {
+    color: COLORS.gray,
+    fontSize: 18,
+  },
+  root: { padding: 20, minHeight: 300 },
+  title: { textAlign: 'center', fontSize: 30 },
+  codeFieldRoot: { marginTop: 20 },
+  cell: {
+    width: 40,
+    height: 40,
+    lineHeight: 38,
+    fontSize: 24,
+    borderWidth: 2,
+    borderColor: '#00000030',
+    textAlign: 'center',
+  },
+  focusCell: {
+    borderColor: '#000',
   },
 });
 

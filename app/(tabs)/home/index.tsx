@@ -7,7 +7,7 @@ import {
     SectionList,
     StatusBar,
   } from 'react-native';
-  import { COLORS, SIZES, FONTS, image } from "../../constants";
+  import { COLORS, SIZES, FONTS, image } from "../../../constants";
   
   const DATA = [
     {
@@ -30,7 +30,7 @@ import {
   ];
 
   
-const PointHistory = () =>
+const Home = () =>
 {
     return(
         <SafeAreaView>
@@ -70,4 +70,4 @@ const styles = StyleSheet.create({
     },
   });
 
-export default PointHistory
+export default Home

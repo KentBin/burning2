@@ -6,15 +6,7 @@ export default function PhoneSignIn({ onPhoneNumberSubmit }) {
   const [phoneNumber, setPhoneNumber] = React.useState("");
   const [validPhoneNumber, setValidPhoneNumber] = React.useState(false);
 
-  const theme = {
-    ...DefaultTheme,
-    colors: {
-      ...DefaultTheme.colors,
-      primary: "#3f51b5",
-      underlineColor: "transparent",
-      background: "#00000000",
-    },
-  };
+
 
   const onChangePhoneNumber = (text) => {
     let cleaned = text.replace(/\D/g, "");

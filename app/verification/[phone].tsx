@@ -1,5 +1,5 @@
 import { Stack, useLocalSearchParams } from 'expo-router';
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { View, Text, Image, TouchableOpacity, StyleSheet, ScrollView, Alert } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { COLORS, SIZES, image } from "../../constants";
@@ -43,9 +43,6 @@ const Page = () => {
       }
     }
 
-    const verifyCode = async () => {
-
-    }
     const resendCode = async () => {}
 
     return(
