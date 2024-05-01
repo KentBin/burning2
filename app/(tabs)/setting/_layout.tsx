@@ -6,14 +6,11 @@ const Layout = () => {
       <Stack.Screen
         name="index"
         options={{
-          title: 'Settings',
+          title: 'Tài Khoản',
           headerLargeTitle: true,
           headerShadowVisible: false,
-          headerStyle: { backgroundColor: COLORS.background },
+          headerStyle: { backgroundColor: COLORS.white },
 
-          headerSearchBarOptions: {
-            placeholder: 'Search',
-          },
         }}
       />
     </Stack>

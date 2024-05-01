@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { View, Text, Image, StyleSheet, ScrollView } from "react-native";
 import { GestureHandlerRootView, TouchableOpacity } from 'react-native-gesture-handler';
-import { SafeAreaView } from "react-native-safe-area-context";
 import { COLORS, SIZES, FONTS, image } from "../constants";
 
 import SignUpButton from "../components/SignUpButton";
@@ -10,8 +9,9 @@ import { useRouter } from 'expo-router';
 
 import vnIcon from '@/assets/logo/logo-vietnam.png';
 
-import auth from '@react-native-firebase/auth';
-import firestore from '@react-native-firebase/firestore';
+import auth, { firebase } from '@react-native-firebase/auth';
+import db from '@react-native-firebase/database';
+import { useAuthStore } from "@/store/user";
 
 import LottieView from "lottie-react-native";
 import {
@@ -39,15 +39,13 @@ const VIE_PHONE = [
   /\d/,
 ];
 
-const Login = ({ }) => {
+const Login = () => {
   const [isVerifying, setIsVerifying] = useState(false);
 
   const [phoneNumber, setPhoneNumber] = useState('+84 ');
   const [confirmationResult, setConfirmationResult] = useState<any | null>(null);
   const [errorMessage, setMessage] = useState('');
   const [code, setCode] = useState('');
-
-  const [verificationWrong, setVerificationWrong] = useState(false);
 
   const router = useRouter();
 
@@ -58,12 +56,12 @@ const Login = ({ }) => {
   });
   useEffect(() => {
     if (code.length === 6) {
-        verifyOTP();
+      verifyOTP();
     }
   }, [code]);
   const sendOTP = async () => {
-    const phoneRegex = /((^(\+84|84|0|0084){1})(3|5|7|8|9))+([0-9 ]{10})$/;
     setIsVerifying(true);
+    const phoneRegex = /((^(\+84|84|0|0084){1})(3|5|7|8|9))+([0-9 ]{10})$/;
     try {
       if (!phoneRegex.test(phoneNumber)) {
         setMessage('So dien toai ko op le')
@@ -79,58 +77,64 @@ const Login = ({ }) => {
     }
   }
 
+  const resendCode = () => { }
+
   const verifyOTP = async () => {
     try {
       const userCredential = await confirmationResult.confirm(code);
       const user = userCredential.user;
       console.log(user)
-      router.push(`/(tabs)/home`);
 
-   /*    const userDocument = await firestore().collection('customers').doc(user.phoneNumber).get();
-      if (userDocument.exists) {
-        router.push(`/(tabs)/OrderList`);
+      const userDocumentREF = await db().app.database('https://brning9-default-rtdb.asia-southeast1.firebasedatabase.app/').ref('/clientApp');
+      const newp = phoneNumber.replace("+84", "0").replace(/\s/g, "")
+      //console.log(newp)
+      const existed = await userDocumentREF.child(newp).once('value')
+      //console.log(existed.child('Name').val())
+      if (existed.exists()) {
+
+        useAuthStore.setState({
+          user: { uid: user?.uid, name: existed.child('Name').val(), point: existed.child('Point').val(), contactNumber: user?.phoneNumber},
+          //isSignedIn: true
+          
+        });
       }
+      /* 
       else {
-        alert('sign up todo')
+        userDocumentREF.set({phoneNumber: phoneNumber})
+        
       } */
+      //router.replace(`/(tabs)/home`);
     }
     catch (error) {
-      alert(error);
       console.log(error);
-      setVerificationWrong(true);
     }
-  }
-
-  const trySignIn = async () => {
-    router.push(`/verification/${phoneNumber}?signin=true`);
-
-  }
-
-  const resendCode = async () => {
-
   }
 
   return (
     <GestureHandlerRootView style={{ flex: 1, backgroundColor: COLORS.background }}>
-        {isVerifying && (
-      <View style={[StyleSheet.absoluteFill, styles.loading]} >
-        <LottieView  imageAssetsFolder={'lottie/orangeJuice'} source={require('../android/app/src/main/assets/lottie/orangeJuice/Animation-1710265288711.json')}/>
-        <Text style={{ fontSize: 18, padding: 10 }}>Sending code...</Text>
-      </View>
-    )}
+      {isVerifying && (
+        <View style={[StyleSheet.absoluteFill, styles.loading]} >
+          <LottieView autoPlay loop style={{
+            width: 400,
+            height: 400,
+          }} imageAssetsFolder={'lottie/border'} source={require('../android/app/src/main/assets/lottie/border/border92749127492.json')} />
+          
+        </View>
+        
+      )}
       <ScrollView
-        style={{ flex: 1, backgroundColor: COLORS.primary, padding: 16 }}>
+        style={{ flex: 1, backgroundColor: COLORS.white, padding: 16 }}>
         <Image
           source={image.logo}
           resizeMode="contain"
           style={{
-            width: 128,
-            height: 128,
+            width: 168,
+            height: 168,
             marginLeft: 0,
             marginBottom: 30
           }}
         />
-        {!confirmationResult ? (<><Text style={{ ...FONTS.body3, color: COLORS.white }}>Nhập Số Điện Thoại Đã Đăng Ký Tích Điểm</Text>
+        {!confirmationResult ? (<><Text style={{ ...FONTS.body3, color: COLORS.secondary }}>Nhập Số Điện Thoại Đã Đăng Ký Tích Điểm</Text>
           <View style={{ marginVertical: 22 }}>
             <View style={styles.container}>
               <View
@@ -168,7 +172,7 @@ const Login = ({ }) => {
               onPress={sendOTP}
             />
 
-          </View></>) : (<><Text style={{ color: COLORS.white }}> Nhập Mã OTP </Text>
+          </View></>) : (<><Text style={{ color: COLORS.secondary }}> Nhập Mã OTP </Text>
 
             <CodeField
               ref={ref}
@@ -191,10 +195,10 @@ const Login = ({ }) => {
               )}
             />
             <View style={{ marginVertical: 22 }}>
-            
+
               <TouchableOpacity style={styles.button} onPress={resendCode}>
                 <Text style={styles.buttonText}>Gửi Lại Mã OTP</Text>
-              </TouchableOpacity> 
+              </TouchableOpacity>
             </View></>)}
       </ScrollView>
     </GestureHandlerRootView>
@@ -241,7 +245,7 @@ const styles = StyleSheet.create({
   },
   loading: {
     zIndex: 10,
-    backgroundColor: '#fff',
+    backgroundColor: COLORS.white,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -250,23 +254,23 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   buttonText: {
-    color: COLORS.gray,
+    color: COLORS.primary,
     fontSize: 18,
   },
   root: { padding: 20, minHeight: 300 },
   title: { textAlign: 'center', fontSize: 30 },
   codeFieldRoot: { marginTop: 20 },
   cell: {
-    width: 40,
-    height: 40,
-    lineHeight: 38,
-    fontSize: 24,
-    borderWidth: 2,
-    borderColor: '#00000030',
+    width: 50,
+    height: 50,
+    lineHeight: 48,
+    fontSize: 28,
+    borderWidth: 3,
+    borderColor: COLORS.primary,
     textAlign: 'center',
   },
   focusCell: {
-    borderColor: '#000',
+    borderColor: COLORS.secondary,
   },
 });
 

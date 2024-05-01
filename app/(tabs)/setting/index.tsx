@@ -1,12 +1,16 @@
 import BoxedIcon from '@/components/BoxedIcon';
-import { COLORS } from "../../../constants";
 import { Ionicons } from '@expo/vector-icons';
-import { View, ScrollView, Text, FlatList, StyleSheet } from 'react-native';
+import { View, ScrollView, Text, FlatList, StyleSheet, ImageBackground} from 'react-native';
+import { COLORS, SIZES, FONTS, image} from "../../../constants";
+import { FontAwesome } from '@expo/vector-icons';
+import { useAuthStore } from '@/store/user';
 import auth from '@react-native-firebase/auth';
-import {GestureHandlerRootView, TouchableOpacity} from 'react-native-gesture-handler'
+import SignUpButton from '@/components/SignUpButton';
+
 
 const Page = () => {
-
+  const {user} = useAuthStore()
+  
   const items = [
     {
       name: 'Account',
@@ -32,6 +36,26 @@ const Page = () => {
       icon: 'heart',
       backgroundColor: COLORS.gray,
     },
+    {
+      name: 'Tell a Friend',
+      icon: 'heart',
+      backgroundColor: COLORS.gray,
+    },
+    {
+      name: 'Tell a Friend',
+      icon: 'heart',
+      backgroundColor: COLORS.gray,
+    },
+    {
+      name: 'Tell a Friend',
+      icon: 'heart',
+      backgroundColor: COLORS.gray,
+    },
+    {
+      name: 'Tell a Friend',
+      icon: 'heart',
+      backgroundColor: COLORS.gray,
+    },
   ];
   const onSignOut = () => {
     auth()
@@ -39,10 +63,22 @@ const Page = () => {
   };
  
   return (
-    <View style={{ flex: 1, backgroundColor: COLORS.background }}>
+    <ImageBackground source={image.background1} resizeMode='cover' style={defaultStyles.bgcontainer}>
+
       <ScrollView
         contentInsetAdjustmentBehavior="automatic"
-        contentContainerStyle={{ paddingBottom: 40 }}>
+        contentContainerStyle={{ paddingBottom: 40 }}
+        style={{
+          marginBottom: SIZES.tabBarHeight,
+        }}>
+
+<View style={defaultStyles.bigblock}>
+<FontAwesome name="user-circle-o" size={128} />
+<View><Text style = {[defaultStyles.userinfo, {...FONTS.body3}]}>Tên Khách Hàng {user?.name}</Text>
+<Text style = {[defaultStyles.userinfo, {...FONTS.body3}]}>Số Điện Thoại {user?.contactNumber}</Text>
+  <Text style = {[defaultStyles.userinfo, {...FONTS.body3}]}>Điểm Thưởng {user?.point}</Text>
+  </View>
+</View>
 
         <View style={defaultStyles.block}>
           <FlatList
@@ -75,41 +111,56 @@ const Page = () => {
             )}
           />
         </View>
-        <GestureHandlerRootView>
-   <TouchableOpacity onPress={onSignOut}>
-          <Text
-            style={{
-              color: COLORS.primary,
-              fontSize: 18,
-              textAlign: 'center',
-              paddingVertical: 14,
-            }}>
-            Log Out
-          </Text>
-        </TouchableOpacity> 
-        </GestureHandlerRootView>
+
+        <SignUpButton
+              title="Đăng Xuất"
+              style={
+                defaultStyles.block
+              }
+              onPress={onSignOut}
+            />
       </ScrollView>
-    </View>
+    </ImageBackground>
   );
 };
 
 const defaultStyles = StyleSheet.create({
     block: {
       backgroundColor: '#fff',
-      borderRadius: 10,
+      borderRadius: SIZES.radius,
       marginHorizontal: 14,
       marginTop: 20,
+      
     },
     item: {
       flexDirection: 'row',
       alignItems: 'center',
-      padding: 10,
+      padding: SIZES.padding3,
       gap: 10,
     },
     separator: {
       height: StyleSheet.hairlineWidth,
       backgroundColor: COLORS.gray,
       marginLeft: 50,
+    },
+    bgcontainer: {
+    flex:1
+  
+    },
+    bigblock: {
+      backgroundColor: COLORS.white,
+      borderRadius: 10,
+      marginHorizontal: 14,
+      marginTop: 40,
+      marginBottom: 40,
+      flexDirection: 'row',
+      padding: 10,
+      gap: 20,
+    },
+    userinfo:{
+      flexShrink: 1, 
+      marginBottom: 4,
+      marginEnd: 4,
     },
   });
 

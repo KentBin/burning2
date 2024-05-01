@@ -1,4 +1,4 @@
-import { COLORS, SIZES, FONTS } from "../../../constants";
+import { COLORS, FONTS } from "../../../constants";
 import { Stack } from 'expo-router';
 const Layout = () => {
   return (
@@ -6,11 +6,11 @@ const Layout = () => {
       <Stack.Screen
         name="index"
         options={{
-          title: 'Home',
+          title: 'Thẻ Thành Viên',
           headerLargeTitle: true,
+          headerTitleStyle: {...FONTS.largeTitle},
           headerShadowVisible: false,
-          headerStyle: { backgroundColor: COLORS.white },
-
+          headerStyle: { backgroundColor: COLORS.ligtDark },
         }}
       />
     </Stack>
