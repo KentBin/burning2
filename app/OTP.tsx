@@ -110,6 +110,19 @@ const Login = () => {
     }
   }
 
+const loginDemo = () => {
+  useAuthStore.setState({
+    user: {
+      uid: 'demo-user-1',
+      name: 'Nguyễn Văn A',
+      point: 520,
+      contactNumber: '0901234567',
+    },
+  });
+
+  router.replace('/(tabs)/home');
+};
+
   return (
     <GestureHandlerRootView style={{ flex: 1, backgroundColor: COLORS.background }}>
       {isVerifying && (
@@ -170,6 +183,15 @@ const Login = () => {
                 marginVertical: 8,
               }}
               onPress={sendOTP}
+            />
+
+            <SignUpButton
+              title="DEMO MODE"
+              style={{
+                width: SIZES.width - 32,
+                marginVertical: 8,
+              }}
+              onPress={loginDemo}
             />
 
           </View></>) : (<><Text style={{ color: COLORS.secondary }}> Nhập Mã OTP </Text>
