@@ -21,20 +21,22 @@ const Home = () =>{
   const [loading, setLoading] = useState(true)
   
   useEffect(() => {
-    const fetchPromo = (snap: any) => { 
+    const fetchPromo = (snap: any) => {
+          console.log("snap exists:", snap.exists())
+          console.log("snap val:", snap.val())  // <-- what does this show?
       const items :string[] = []
       const adJSON = snap.toJSON()
-      try{     
+      try{
        for (var key in adJSON) {
         //setpromoURLs(adVal.child(key))
         items.push(adJSON[key])
        }
-       
+
        setpromoURLs(items)
        setLoading(false)
        //console.log(loz.val()[0].uri)
       }
-    
+
       catch (error){
         console.log(error)
       }
@@ -42,7 +44,7 @@ const Home = () =>{
     db().app.database('https://brning9-default-rtdb.asia-southeast1.firebasedatabase.app/').ref('/promotion').on('value', snap => {
       fetchPromo(snap)
     })
-    
+
 }, [])
 
 
@@ -55,31 +57,10 @@ const Home = () =>{
         
       )}
           <ImageBackground source={image.background2} resizeMode='cover' style={styles.bgcontainer}>     
-          <Carousel
-                loop
-                width={width}
-                height={width}
-                autoPlay={true}
-                data={promoURLs}
-                scrollAnimationDuration={3000}
-                mode='parallax'
-                //onSnapToItem={(index) => console.log('current index:', index)}                
-                renderItem={({index}) => (
-                    <View
-                        style={{
-                            flex: 1,
-                            borderWidth: 2,
-                            justifyContent: 'center',
-                            borderRadius: SIZES.radius,
-                            borderColor: COLORS.secondary,
-                            overflow: 'hidden'
-                        }}
-                    >
-                        <Image style={styles.image} source={{ uri: promoURLs[index] }}></Image> 
-                       {/* <Text style = {{fontSize: 25}}> {promoURLs[index]}</Text>  */}
-                    </View>
-                )}
-            />
+{promoURLs.length > 0 && (
+  <Image source={{ uri: promoURLs[0] }} style={{ width: 200, height: 200 }} />
+)}
+
     </ImageBackground>
         </SafeAreaView>
     )
