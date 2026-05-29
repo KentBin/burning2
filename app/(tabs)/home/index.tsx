@@ -1,92 +1,184 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react';
+
 import {
-    StyleSheet,
-    View,
-    SafeAreaView,
-    Dimensions,
-    StatusBar,
-    ImageBackground,
-    Image,
-    Text
-  } from 'react-native';
-  import { COLORS, SIZES, FONTS, image } from "../../../constants";
-  import Carousel from 'react-native-reanimated-carousel';
-  import db from '@react-native-firebase/database';
+  View,
+  Image,
+  FlatList,
+  StyleSheet,
+  Dimensions,
+  ImageBackground,
+} from 'react-native';
 
-  const width = Dimensions.get('window').width;
+import { COLORS, SIZES, FONTS, image } from "../../../constants";
 
-  
-const Home = () =>{
-  const [promoURLs, setpromoURLs] = useState<string[]>([])
-  const [loading, setLoading] = useState(true)
-  
+import db from '@react-native-firebase/database';
+
+const { width } = Dimensions.get('window');
+
+const Home = () => {
+  // Stores image URLs from Firebase
+  const [images, setImages] = useState<string[]>([]);
+
+  // Tracks currently visible slide
+  const [currentIndex, setCurrentIndex] = useState(0);
+
+  // Reference to FlatList so we can scroll manually
+  const flatListRef = useRef<FlatList>(null);
+
+  /*
+    FETCH IMAGES FROM FIREBASE
+  */
   useEffect(() => {
-    const fetchPromo = (snap: any) => {
-          console.log("snap exists:", snap.exists())
-          console.log("snap val:", snap.val())  // <-- what does this show?
-      const items :string[] = []
-      const adJSON = snap.toJSON()
-      try{
-       for (var key in adJSON) {
-        //setpromoURLs(adVal.child(key))
-        items.push(adJSON[key])
-       }
+    const ref = db().ref('/promotion');
 
-       setpromoURLs(items)
-       setLoading(false)
-       //console.log(loz.val()[0].uri)
-      }
+    ref.on('value', snapshot => {
+      const data = snapshot.val();
 
-      catch (error){
-        console.log(error)
-      }
-    }
-    db().app.database('https://brning9-default-rtdb.asia-southeast1.firebasedatabase.app/').ref('/promotion').on('value', snap => {
-      fetchPromo(snap)
-    })
+      if (!data) return;
 
-}, [])
+      // Convert Firebase object into array
+      const urls = Object.values(data);
 
+      setImages(urls as string[]);
+    });
 
-    return(
-        <SafeAreaView>
-      {loading && (
-        <View style={[StyleSheet.absoluteFill, styles.loading]} >
-          <Text style={{ fontSize: 18, padding: 10 }}>Loading Images</Text>
-        </View>
-        
-      )}
-          <ImageBackground source={image.background2} resizeMode='cover' style={styles.bgcontainer}>     
-{promoURLs.length > 0 && (
-  <Image source={{ uri: promoURLs[0] }} style={{ width: 200, height: 200 }} />
-)}
+    // Cleanup listener when component unmounts
+    return () => ref.off();
+  }, []);
 
-    </ImageBackground>
-        </SafeAreaView>
-    )
-}
+  /*
+    AUTOPLAY SLIDER
+    Changes image every 3 seconds
+  */
+  useEffect(() => {
+    // Don't run autoplay if no images
+    if (images.length === 0) return;
+
+    const interval = setInterval(() => {
+      // Go back to first image if at the end
+      const nextIndex =
+        currentIndex === images.length - 1
+          ? 0
+          : currentIndex + 1;
+
+      // Scroll FlatList
+      flatListRef.current?.scrollToIndex({
+        index: nextIndex,
+        animated: true,
+      });
+
+      // Update active index
+      setCurrentIndex(nextIndex);
+    }, 3000);
+
+    return () => clearInterval(interval);
+  }, [currentIndex, images]);
+
+  /*
+    UPDATES CURRENT INDEX WHEN USER SWIPES
+  */
+  const handleScroll = (event: any) => {
+    const slideIndex = Math.round(
+      event.nativeEvent.contentOffset.x / width
+    );
+
+    setCurrentIndex(slideIndex);
+  };
+
+  return (
+      <ImageBackground source={image.background2} resizeMode='cover' style={styles.bgcontainer}>
+
+      {/* IMAGE SLIDER */}
+      <FlatList
+        ref={flatListRef}
+        horizontal
+        pagingEnabled
+        showsHorizontalScrollIndicator={false}
+        data={images}
+        keyExtractor={(item, index) => index.toString()}
+        onMomentumScrollEnd={handleScroll}
+        renderItem={({ item }) => (
+          <View style={styles.slide}>
+            <Image
+              source={{ uri: item }}
+              style={styles.image}
+            />
+          </View>
+        )}
+      />
+
+      {/* PAGINATION DOTS */}
+      <View style={styles.dotsContainer}>
+        {images.map((_, index) => (
+          <View
+            key={index}
+            style={[
+              styles.dot,
+              currentIndex === index && styles.activeDot,
+            ]}
+          />
+        ))}
+      </View>
+        </ImageBackground>
+  );
+};
 
 const styles = StyleSheet.create({
-  image:{
-flex: 1,
-resizeMode: 'stretch',
-  },
-    container: {
-      flex: 1,
-      paddingTop: StatusBar.currentHeight,
-      marginHorizontal: 16,
-    },
+  /*
+    MAIN SCREEN
+  */
+
     bgcontainer: {
       alignItems: 'center',
       height: '100%',
       width: '100%',
     },
-    loading: {
-      //zIndex: 10,
-    backgroundColor: COLORS.white,
-    justifyContent: 'center',
+  /*
+    EACH SLIDE
+  */
+  slide: {
+    width: width,
     alignItems: 'center',
-    }
-  });
+    justifyContent: 'flex-start',
+    paddingTop: 10,
+  },
 
-export default Home
+  /*
+    IMAGE STYLE
+  */
+  image: {
+    width: '94%',
+    height: 220,
+    borderRadius: 20,
+  },
+
+  /*
+    DOTS CONTAINER
+  */
+  dotsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    marginTop: 12,
+  },
+
+  /*
+    NORMAL DOT
+  */
+  dot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: COLORS.white,
+    marginHorizontal: 4,
+  },
+
+  /*
+    ACTIVE DOT
+  */
+  activeDot: {
+    width: 18,
+    backgroundColor: COLORS.secondary,
+  },
+});
+
+export default Home;

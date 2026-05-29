@@ -4,11 +4,12 @@ import {Platform} from 'react-native';
 const tabBarHeight = Platform.OS === 'ios' ? 100 : 70
 
 export const COLORS = {
-  primary: '#191919',
+  primary: '#191919', //black
   white: "#FFFFFF",
   background: "#992135",//"#253334"
   gray: "#BEC2C2",
-  secondary: "#ef6a25",
+  secondary: "#ff9d58", //orange
+  icedorange: '#ffad35',
   ligtDark: '#0e0202',
   red: "#D2042D" //cerry red
 }
