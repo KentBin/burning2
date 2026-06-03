@@ -7,6 +7,7 @@ import {
   StyleSheet,
   Dimensions,
   ImageBackground,
+  Text
 } from 'react-native';
 
 import { COLORS, SIZES, FONTS, image } from "../../../constants";
@@ -86,8 +87,11 @@ const Home = () => {
   };
 
   return (
-      <ImageBackground source={image.background2} resizeMode='cover' style={styles.bgcontainer}>
-
+      <ImageBackground   source={image.background2}
+                         resizeMode="cover"
+                         style={styles.bgcontainer}
+                         >
+        <View style={{ height: 240 }}>
       {/* IMAGE SLIDER */}
       <FlatList
         ref={flatListRef}
@@ -106,8 +110,7 @@ const Home = () => {
           </View>
         )}
       />
-
-      {/* PAGINATION DOTS */}
+ {/* PAGINATION DOTS */}
       <View style={styles.dotsContainer}>
         {images.map((_, index) => (
           <View
@@ -119,6 +122,7 @@ const Home = () => {
           />
         ))}
       </View>
+</View>
         </ImageBackground>
   );
 };
@@ -129,9 +133,8 @@ const styles = StyleSheet.create({
   */
 
     bgcontainer: {
-      alignItems: 'center',
-      height: '100%',
-      width: '100%',
+  flex: 1,
+  alignItems: 'center',
     },
   /*
     EACH SLIDE

@@ -12,7 +12,7 @@ import auth from '@react-native-firebase/auth';
 
 import { Ionicons, FontAwesome } from '@expo/vector-icons';
 
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { RefreshControl } from 'react-native';
 import db from '@react-native-firebase/database';
 
@@ -99,9 +99,37 @@ const Page = () => {
     auth().signOut();
   };
 
-  /*
-    REUSABLE SETTINGS ROW
-  */
+const onRefresh = useCallback(async () => {
+  if (!user?.contactNumber) return;
+
+  setRefreshing(true);
+
+  try {
+    const normalizedPhone = user.contactNumber
+      .replace('+84', '0')
+      .replace(/\s/g, '');
+
+    const snapshot = await db()
+      .app
+      .database('https://brning9-default-rtdb.asia-southeast1.firebasedatabase.app/')
+      .ref(`/clientApp/${normalizedPhone}`)
+      .once('value');
+
+    if (snapshot.exists()) {
+      useAuthStore.setState({
+        user: {
+          ...user,
+          point: snapshot.child('Point').val(),
+        },
+      });
+    }
+  } catch (err) {
+    console.log(err);
+  }
+
+  setRefreshing(false);
+}, [user]);
+
   const renderItem = (item: any) => (
     <TouchableOpacity
       key={item.name}
@@ -191,6 +219,12 @@ const compactHeaderStyle = useAnimatedStyle(() => {
         contentContainerStyle={{
           paddingBottom: 50,
         }}
+        refreshControl={
+             <RefreshControl
+                refreshing={refreshing}
+                onRefresh={onRefresh}
+              />
+              }
       >
         {/* TOP BACKGROUND */}
         <View style={styles.headerBackground} />

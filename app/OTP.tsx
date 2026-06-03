@@ -115,7 +115,7 @@ const loginDemo = () => {
     user: {
       uid: 'demo-user-1',
       name: 'Nguyễn Văn A',
-      point: 520,
+      point: 0,
       contactNumber: '0901234567',
     },
   });

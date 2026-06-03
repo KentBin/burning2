@@ -4,6 +4,8 @@ import * as SplashScreen from 'expo-splash-screen';
 import { useEffect, useState } from 'react';
 import { Stack, useRouter, useSegments,  useRootNavigationState } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
+import PointsProvider from '@/features/loyalty/providers/PointsProvider';
+import GlobalPointsToast from '@/features/loyalty/components/GlobalPointsToast';
 //import LottieSplashScreen from 'react-native-lottie-splash-screen'
 
 import auth from '@react-native-firebase/auth';
@@ -80,7 +82,12 @@ const InitialLayout = () => {
 const RootLayoutNav =() =>{
 
   return (
+    <>
       <InitialLayout/>
+        <PointsProvider />
+
+      <GlobalPointsToast />
+      </>
   );
 }
 
