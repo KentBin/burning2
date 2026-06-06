@@ -25,9 +25,12 @@ export interface AuthStore {
   persist((set, get) => ({
     user: null,
     //setUser: (user: User) => {set((state) => ({user: state.user}))}
-    setUser: (user) => set({ user }),
+    setUser: (user) => {
+          console.log('setUser called:', user);
+          set({ user })
+}
   }), {
-    name: 'user-storage', 
+    name: 'user-storage',
     storage: createJSONStorage(() => zustandStorage),
   })
 

@@ -5,7 +5,7 @@ import {
     ActivityIndicator,
 } from 'react-native'
 import React from 'react'
-import { COLORS, FONTS, SIZES } from '../constants'
+import { COLORS, FONTS, SIZES } from '../../constants'
 
 const SignUpButton = (props: any) => {
     const isLoading = props.isLoading || false

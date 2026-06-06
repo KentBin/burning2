@@ -1,5 +1,5 @@
-import BoxedIcon from '@/components/BoxedIcon';
-import SignUpButton from '@/components/SignUpButton';
+import BoxedIcon from '@/components/ui/BoxedIcon';
+import SignUpButton from '@/components/ui/SignUpButton';
 import { useAuthStore } from '@/store/user';
 import Animated, {
   useAnimatedScrollHandler,
@@ -12,7 +12,7 @@ import auth from '@react-native-firebase/auth';
 
 import { Ionicons, FontAwesome } from '@expo/vector-icons';
 
-import React, { useEffect, useState, useCallback, useRef } from 'react';
+import React, { useState, useCallback } from 'react';
 import { RefreshControl } from 'react-native';
 import db from '@react-native-firebase/database';
 
@@ -31,32 +31,6 @@ const Page = () => {
   const { user } = useAuthStore();
   const [refreshing, setRefreshing] = useState(false);
   const scrollY = useSharedValue(0);
-
-  useEffect(() => {
-    if (!user?.contactNumber) return;
-
-    const normalizedPhone = user.contactNumber
-      .replace('+84', '0')
-      .replace(/\s/g, '');
-
-    const userRef = db()
-      .app
-      .database('https://brning9-default-rtdb.asia-southeast1.firebasedatabase.app/')
-      .ref(`/clientApp/${normalizedPhone}`);
-
-    const listener = userRef.on('value', snapshot => {
-      if (snapshot.exists()) {
-        useAuthStore.setState({
-          user: {
-            ...user,
-            point: snapshot.child('Point').val(),
-          },
-        });
-      }
-    });
-
-    return () => userRef.off('value', listener);
-  }, []);
 
   /*
     SETTINGS DATA
@@ -119,7 +93,11 @@ const onRefresh = useCallback(async () => {
       useAuthStore.setState({
         user: {
           ...user,
-          point: snapshot.child('Point').val(),
+          point:
+            snapshot
+              .child('balance')
+              .child('points')
+              .val() || 0,
         },
       });
     }

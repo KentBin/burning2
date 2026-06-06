@@ -6,6 +6,8 @@ import React from "react";
 import home from "./home";
 import setting from "./setting";
 import qr from "./qr";
+import history from "./history";
+//https://ionic.io/ionicons
 
 const tabBarIcon =
   (name: any) =>
@@ -97,6 +99,18 @@ const TabsLayout = () => {
               component={qr}
               
             />
+
+            <Tab.Screen
+                          options={{
+                            tabBarIcon: tabBarIcon('receipt-outline'),
+                            tabBarLabel: showLabel ? 'History' : undefined,
+                            title: 'Lịch Sử',
+
+                          }}
+                          name="History"
+                          component={history}
+
+                        />
           
             <Tab.Screen
               options={{

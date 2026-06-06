@@ -1,4 +1,12 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useEffect, useState } from 'react';
+import { getTransactions }
+from '@/features/loyalty/services/loyaltyService';
+
+import { Transaction }
+from '@/features/loyalty/types';
+
+import { useAuthStore }
+from '@/store/user';
 import {
   View,
   Text,
@@ -12,59 +20,15 @@ import { Ionicons } from '@expo/vector-icons';
 
 import { COLORS, SIZES } from '@/constants';
 
-type TransactionType = 'earn' | 'spend';
-
-interface PointTransaction {
+interface Transaction {
   id: string;
-  date: string;
-  location: string;
-  amount: number;
-  points: number;
-  type: TransactionType;
+  createdAt: number;
+  description: string;
+  amount?: number;
+  point: number;
+  type: 'earn' | 'spend';
 }
 
-const MOCK_HISTORY: PointTransaction[] = [
-  {
-    id: '1',
-    date: '2026-05-28T20:15:00',
-    location: 'Burni Billiards Hà Nội',
-    amount: 450000,
-    points: 45,
-    type: 'earn',
-  },
-  {
-    id: '2',
-    date: '2026-05-24T19:30:00',
-    location: 'Burni Billiards Hà Nội',
-    amount: 320000,
-    points: 32,
-    type: 'earn',
-  },
-  {
-    id: '3',
-    date: '2026-05-20T18:00:00',
-    location: 'Đổi Voucher Nước',
-    amount: 0,
-    points: 50,
-    type: 'spend',
-  },
-  {
-    id: '4',
-    date: '2026-04-14T21:00:00',
-    location: 'Burni Billiards Hà Nội',
-    amount: 620000,
-    points: 62,
-    type: 'earn',
-  },
-  {
-    id: '5',
-    date: '2026-04-01T17:15:00',
-    location: 'Burni Billiards Hà Nội',
-    amount: 280000,
-    points: 28,
-    type: 'earn',
-  },
-];
 
 const formatCurrency = (value: number) => {
   return value.toLocaleString('vi-VN');
@@ -88,10 +52,18 @@ const formatDate = (dateString: string) => {
 
 export default function HistoryPage() {
   const [refreshing, setRefreshing] = useState(false);
+  const { user } = useAuthStore();
+
+  const [transactions, setTransactions] =
+    useState<Transaction[]>([]);
 
   const [filter, setFilter] = useState<
     'all' | 'earn' | 'spend'
   >('all');
+
+useEffect(() => {
+  loadTransactions();
+}, []);
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -103,15 +75,27 @@ export default function HistoryPage() {
     setRefreshing(false);
   };
 
-  const filteredTransactions = useMemo(() => {
-    if (filter === 'all') {
-      return MOCK_HISTORY;
-    }
+  const loadTransactions =
+    async () => {
+      if (!user?.contactNumber) return;
 
-    return MOCK_HISTORY.filter(
-      item => item.type === filter
-    );
-  }, [filter]);
+      const data =
+        await getTransactions(
+          user.contactNumber
+        );
+
+      setTransactions(data);
+    };
+
+const filteredTransactions = useMemo(() => {
+  if (filter === 'all') {
+    return transactions;
+  }
+
+  return transactions.filter(
+    item => item.type === filter
+  );
+}, [filter, transactions]);
 
   const groupedTransactions = useMemo(() => {
     const groups: Record<
@@ -120,7 +104,7 @@ export default function HistoryPage() {
     > = {};
 
     filteredTransactions.forEach(item => {
-      const key = formatMonthGroup(item.date);
+      const key = formatMonthGroup(new Date(item.createdAt).toISOString());
 
       if (!groups[key]) {
         groups[key] = [];
@@ -132,13 +116,13 @@ export default function HistoryPage() {
     return Object.entries(groups);
   }, [filteredTransactions]);
 
-  const totalPoints = MOCK_HISTORY.reduce(
-    (acc, curr) =>
-      curr.type === 'earn'
-        ? acc + curr.points
-        : acc - curr.points,
-    0
-  );
+const totalPoints = transactions.reduce(
+  (acc, curr) =>
+    curr.type === 'earn'
+      ? acc + curr.point
+      : acc - curr.point,
+  0
+);
 
   return (
     <Animated.ScrollView
@@ -209,7 +193,7 @@ export default function HistoryPage() {
                   <Text
                     style={styles.date}
                   >
-                    {formatDate(item.date)}
+                    {formatDate(new Date(item.createdAt).toISOString())}
                   </Text>
 
                   <Ionicons
@@ -230,7 +214,7 @@ export default function HistoryPage() {
                 <Text
                   style={styles.location}
                 >
-                  {item.location}
+                  {item.description}
                 </Text>
 
                 <View
@@ -255,8 +239,8 @@ export default function HistoryPage() {
                     ]}
                   >
                     {item.type === 'earn'
-                      ? `+${item.points}`
-                      : `-${item.points}`}
+                      ? `+${item.point}`
+                      : `-${item.point}`}
                   </Text>
                 </View>
               </View>

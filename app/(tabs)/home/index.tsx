@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-
+import PressableProfileCard from '@/features/loyalty/components/PressableProfileCard';
 import {
   View,
   Image,
@@ -91,6 +91,7 @@ const Home = () => {
                          resizeMode="cover"
                          style={styles.bgcontainer}
                          >
+                         <PressableProfileCard/>
         <View style={{ height: 240 }}>
       {/* IMAGE SLIDER */}
       <FlatList

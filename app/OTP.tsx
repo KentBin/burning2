@@ -3,7 +3,7 @@ import { View, Text, Image, StyleSheet, ScrollView } from "react-native";
 import { GestureHandlerRootView, TouchableOpacity } from 'react-native-gesture-handler';
 import { COLORS, SIZES, FONTS, image } from "../constants";
 
-import SignUpButton from "../components/SignUpButton";
+import SignUpButton from "../components/ui/SignUpButton";
 import MaskInput from 'react-native-mask-input';
 import { useRouter } from 'expo-router';
 
@@ -92,11 +92,19 @@ const Login = () => {
       //console.log(existed.child('Name').val())
       if (existed.exists()) {
 
-        useAuthStore.setState({
-          user: { uid: user?.uid, name: existed.child('Name').val(), point: existed.child('Point').val(), contactNumber: user?.phoneNumber},
-          //isSignedIn: true
-          
-        });
+useAuthStore.setState({
+  user: {
+    uid: user?.uid,
+    name: existed.child('Name').val(),
+    point:
+      existed
+        .child('balance')
+        .child('points')
+        .val() || 0,
+    contactNumber: user?.phoneNumber,
+  },
+});
+
       }
       /* 
       else {
@@ -110,12 +118,22 @@ const Login = () => {
     }
   }
 
-const loginDemo = () => {
+const loginDemo = async () => {
+  const snapshot = await db()
+    .app
+    .database('https://brning9-default-rtdb.asia-southeast1.firebasedatabase.app/')
+    .ref('/clientApp/0901234567')
+    .once('value');
+
   useAuthStore.setState({
     user: {
       uid: 'demo-user-1',
-      name: 'Nguyễn Văn A',
-      point: 0,
+      name: snapshot.child('Name').val(),
+      point:
+        snapshot
+          .child('balance')
+          .child('points')
+          .val() || 0,
       contactNumber: '0901234567',
     },
   });
