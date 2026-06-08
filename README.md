@@ -1,160 +1,164 @@
-# Pool Room Loyalty App
+Pool Room Loyalty Platform
 
-A mobile app for pool room customers to **log in with their phone number**, track **loyalty points**, and stay updated on **promotions and events**.
+A customer loyalty platform for pool clubs consisting of:
 
-Built with **Expo (SDK 50)** and **React Native 0.73**.
+React Native mobile app for members
+Web-based POS dashboard for staff
+Firebase Realtime Database backend
+Real-time loyalty point synchronization
 
----
+Customers can log in using their registered phone number to view their membership information, loyalty points, transaction history, promotions, and digital membership QR code.
 
-## 1. Features
+Staff can complete sales through a POS dashboard, which automatically awards loyalty points and records transactions.
 
-* Phone number authentication (Firebase)
-* View accumulated loyalty points
-* Promotions & announcements
-* Smooth mobile UI with animations
+Built with Expo (SDK 50), React Native 0.73, and Firebase.
 
----
+1. Features
+   Customer Mobile App
+   Phone number authentication (Firebase)
+   Membership profile
+   Digital membership QR code
+   Real-time loyalty point balance
+   Transaction history
+   Promotions and announcements
+   Pull-to-refresh support
+   Animated UI and point update notifications
+   Staff POS Dashboard
+   Customer lookup by phone number
+   Complete sales transactions
+   Automatic point calculation
+   Automatic point awarding
+   Transaction record creation
+   Real-time synchronization with customer accounts
+2. System Architecture
+   Staff POS Dashboard
+   │
+   ▼
+   Firebase Realtime Database
+   │
+   ▼
+   Customer Mobile App
 
-## 2. Requirements
+When a staff member completes a sale:
 
-### Recommended environment
+Sale Completed
+│
+▼
+Create Transaction
+│
+▼
+Update Customer Balance
+│
+▼
+Realtime Update To Mobile App
+3. Tech Stack
+   Mobile App
+   React Native
+   Expo Router
+   TypeScript
+   Zustand
+   React Native Reanimated
+   Firebase Authentication
+   Firebase Realtime Database
+   POS Dashboard
+   React
+   TypeScript
+   Firebase SDK
+   Backend Services
+   Firebase Authentication
+   Firebase Realtime Database
+4. Firebase Data Structure
+   {
+   "clientApp": {
+   "0901234567": {
+   "Name": "Nguyễn Văn A",
 
-* **Node.js:** 18.x (e.g. 18.20.4)
-* **npm:** 9.x
-* **Android Studio:** installed (for Android builds)
-* **ADB / USB Debugging:** enabled for physical device testing
+   "balance": {
+   "points": 500
+   },
 
-> Newer Node (20+) and npm (10/11) may cause dependency issues.
+   "transactions": {
+   "-Nabc123": {
+   "type": "earn",
+   "amount": 120000,
+   "points": 12,
+   "location": "Burning Billiards",
+   "createdAt": 1712345678901
+   }
+   }
+   }
+   }
+   }
+5. Requirements
+   Recommended Environment
+   Node.js 18.x
+   npm 9.x
+   Android Studio
+   ADB / USB Debugging enabled
 
----
+Newer Node versions may require dependency updates.
 
-## 3. Setup
+6. Setup
+   Install Node
+   nvm install 18.20.4
+   nvm use 18.20.4
 
-### Install Node (via nvm)
+Verify installation:
 
-```bash
-nvm install 18.20.4
-nvm use 18.20.4
-```
-
-Verify:
-
-```bash
 node -v
 npm -v
-```
-
----
-
-### Clean project (important)
-
-```bash
-rd /s /q node_modules
-del package-lock.json
-npm cache clean --force
-```
-
----
-
-### Install dependencies
-
-```bash
+Install Dependencies
 npm install --legacy-peer-deps
-```
+7. Running the Mobile App
+   Android Device
+   adb devices
+   npx expo run:android
+   Development Server
+   npx expo start
 
----
+Expo Go may not support all Firebase native modules.
 
-## 4. Running the App
+8. Running the POS Dashboard
 
-### Recommended: Run on real Android device
+Install dependencies:
 
-1. Connect phone via USB
-2. Enable **USB Debugging**
-3. Verify:
+npm install
 
-```bash
-adb devices
-```
+Start development server:
 
-4. Run:
+npm run dev
 
-```bash
-npx expo run:android
-```
+Open:
 
----
+http://localhost:5173
 
-### Alternative: Expo dev server
+(or the URL displayed by Vite)
 
-```bash
-npx expo start
-```
+9. Loyalty Point Rules
 
-> Note: Expo Go may not fully work due to Firebase native modules.
+Current demo implementation:
 
----
+10,000 VND = 1 Loyalty Point
 
-## 5. Common Issues
+Examples:
 
-### Dependency conflicts
+Bill Amount	Points Earned
+50,000đ	5
+120,000đ	12
+250,000đ	25
 
-```bash
-npm install --legacy-peer-deps
-```
+Points are automatically added when a sale is completed through the POS dashboard.
 
----
-
-### Metro cache issues
-
-```bash
-npx expo start --clear
-```
-
----
-
-### Android build issues
-
-```bash
-cd android
-gradlew clean
-cd ..
-```
-
----
-
-### Device not detected
-
-```bash
-adb kill-server
-adb start-server
-adb devices
-```
-
----
-
-## 6. Notes
-
-* Uses Firebase for authentication and data
-* Some dependencies are outdated and may need replacement in future updates
-* Two flip-card libraries exist; consider removing unused ones
-
----
-
-## 7. Suggested Future Improvements
-
-* Upgrade Expo SDK
-* Replace deprecated UI libraries
-* Add push notifications for promotions
-* Improve offline support
-
----
-
-## 8. Quick Start
-
-```bash
-nvm use 18.20.4
-npm install --legacy-peer-deps
-npx expo run:android
-```
-
----
+10. Common Issues
+    Dependency Conflicts
+    npm install --legacy-peer-deps
+    Metro Cache Issues
+    npx expo start --clear
+    Android Build Issues
+    cd android
+    gradlew clean
+    cd ..
+    Device Not Detected
+    adb kill-server
+    adb start-server
+    adb devices

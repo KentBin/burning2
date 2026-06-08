@@ -116,13 +116,6 @@ const filteredTransactions = useMemo(() => {
     return Object.entries(groups);
   }, [filteredTransactions]);
 
-const totalPoints = transactions.reduce(
-  (acc, curr) =>
-    curr.type === 'earn'
-      ? acc + curr.point
-      : acc - curr.point,
-  0
-);
 
   return (
     <Animated.ScrollView
@@ -144,7 +137,7 @@ const totalPoints = transactions.reduce(
       <Text style={styles.availablePoints}>
         Điểm hiện có:{' '}
         <Text style={styles.bold}>
-          {totalPoints}
+          {user?.point ?? 0}
         </Text>
       </Text>
 
